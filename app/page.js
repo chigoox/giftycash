@@ -1,101 +1,245 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { motion } from 'motion/react';
+import { Button, Input, Modal } from 'antd';
+import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
+import  app  from '../Firebase';
+import { useRouter } from 'next/navigation';
+import Stripe from 'stripe';
+
+import {loadStripe} from '@stripe/stripe-js';
+import {
+  EmbeddedCheckoutProvider,
+  EmbeddedCheckout
+} from '@stripe/react-stripe-js';
+
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [amount, setAmount] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [userData, setUserData] = useState({ userName: '', fullName: '', phone: '', email: '' });
+  const router = useRouter();
+  const [steps, setSteps] = useState(1)
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+  
+
+  return (
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white">
+      <motion.h1 
+        className="text-4xl font-bold text-purple-400"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        GiftyCash
+      </motion.h1>
+      {steps == 1 && <InputSendAmount amount={amount} setAmount={setAmount} setSteps={setSteps}  />}
+      {true && <StripeCheckOut amount={amount}/>}
+      <motion.div 
+        className="fixed bottom-6 right-6 bg-purple-500 p-3 rounded-full cursor-pointer"
+        onClick={() => setModalOpen(true)}
+        whileHover={{ scale: 1.1 }}
+      >
+        +
+      </motion.div>
+
+      <Modal
+  title="Register"
+  open={modalOpen}
+  onCancel={() => setModalOpen(false)}
+  footer={null}
+  style={{
+    borderRadius: '12px', // Rounded corners for the modal
+    padding: '20px', // Add padding for spacing
+  }}
+>
+  <SignUp/>
+</Modal>
+
     </div>
   );
+}
+
+
+
+
+const SignUp = () => {
+  const handleRegister = async () => {
+    const { email, fullName, phone, userName } = userData;
+    if (!email) return;
+    
+    const userRef = doc(db, 'users', email);
+    const userSnap = await getDoc(userRef);
+    
+    if (!userSnap.exists()) {
+      await setDoc(userRef, { userName, fullName, phone, email });
+      setModalOpen(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    setUserData(prev => ({ ...prev, email: result.user.email }));
+  };
+
+
+  return(
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+    <Input
+      placeholder="Username"
+      onChange={e => setUserData({ ...userData, userName: e.target.value })}
+      style={{
+        borderRadius: '8px', // Rounded corners for inputs
+        padding: '12px', // More padding inside the input
+        backgroundColor: '#f9f9f9', // Subtle background color
+        border: '1px solid #e0e0e0', // Soft border
+      }}
+    />
+    <Input
+      placeholder="Full Name"
+      onChange={e => setUserData({ ...userData, fullName: e.target.value })}
+      style={{
+        borderRadius: '8px',
+        padding: '12px',
+        backgroundColor: '#f9f9f9',
+        border: '1px solid #e0e0e0',
+      }}
+    />
+    <Input
+      placeholder="Phone"
+      onChange={e => setUserData({ ...userData, phone: e.target.value })}
+      style={{
+        borderRadius: '8px',
+        padding: '12px',
+        backgroundColor: '#f9f9f9',
+        border: '1px solid #e0e0e0',
+      }}
+    />
+    <Input
+      placeholder="Email"
+      onChange={e => setUserData({ ...userData, email: e.target.value })}
+      style={{
+        borderRadius: '8px',
+        padding: '12px',
+        backgroundColor: '#f9f9f9',
+        border: '1px solid #e0e0e0',
+      }}
+    />
+
+    <Button
+      className="mt-3"
+      onClick={handleRegister}
+      style={{
+        backgroundColor: '#6a3ec7', // Purple background for the button
+        color: 'white',
+        padding: '10px 20px',
+        borderRadius: '8px', // Rounded corners for the button
+        fontWeight: 'bold',
+        border: 'none', // Remove border
+        transition: 'background-color 0.3s ease', // Smooth transition on hover
+      }}
+      onMouseEnter={e => (e.target.style.backgroundColor = '#5a34a5')} // Darker purple on hover
+      onMouseLeave={e => (e.target.style.backgroundColor = '#6a3ec7')} // Revert to original color
+    >
+      Submit
+    </Button>
+
+    <Button
+      className="mt-3"
+      onClick={handleGoogleSignIn}
+      style={{
+        backgroundColor: '#333333', // Gray background for secondary button
+        color: 'white',
+        padding: '10px 20px',
+        borderRadius: '8px',
+        fontWeight: 'bold',
+        border: 'none',
+        transition: 'background-color 0.3s ease',
+      }}
+      onMouseEnter={e => (e.target.style.backgroundColor = '#555555')}
+      onMouseLeave={e => (e.target.style.backgroundColor = '#333333')}
+    >
+      Sign in with Google
+    </Button>
+  </div>
+  )
+}
+
+
+const InputSendAmount = ({amount, setAmount, setSteps}) => {
+  
+  const handlePayment = async () => {
+    if (!amount) return;
+    setSteps(2);
+  };
+
+
+  const defualtAmounts = ['$10', '$25', '$50', '$100', '$250', '$500'];
+  return(
+    <div className='flex flex-col items-center'>
+      <Input 
+        type="number" 
+        placeholder="Enter amount" 
+        value={amount} 
+        onChange={e => setAmount(e.target.value)} 
+        className="mt-5  p-2 border text-center h-32 w-32 text-3xl font-bold  border-purple-500 rounded-3xl bg-gray-900 text-white"
+      />
+
+
+      {/* Default Picks */}
+      <div className="grid grid-cols-4 w-full p-2  gap-2 mt-3">
+        {defualtAmounts.map((a, i) => (
+          <div 
+
+            key={i} 
+            className=" first:col-span-4 last:col-span-4 col-span-2 bg-purple-500 h-12  hover:bg-purple-600 p-2 rounded-full text-center font-bold flex items-center justify-center cursor-pointer"
+            onClick={() => setAmount(a.replace('$', ''))}
+          >
+            {a}
+          </div>
+        ))}
+        </div>
+
+      {/* Submit button */}
+      <Button className="mt-3 w-64 bg-purple-500 border-none  hover:bg-purple-600" onClick={handlePayment}>
+        Send Payment
+      </Button>
+    </div>
+  )
+}
+
+const StripeCheckOut = ({amount = 0}) => {
+console.log(process.env.NEXT_PUBLIC_STRIPE_KEY)
+  const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_KEY);
+
+ const fetchClientSecret = useCallback(() => {
+  // Create a Checkout Session
+  return fetch("/api/checkout", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json", // Set the correct header for JSON payload
+    },
+    body: JSON.stringify({ amount }), // Stringify the amount object
+  })
+    .then((res) => res.json())
+    .then((data) => data.clientSecret); // Return the clientSecret
+}, [amount]);2
+
+  const options = {fetchClientSecret};
+
+  return (
+    <div id="checkout">
+      <EmbeddedCheckoutProvider
+        stripe={stripePromise}
+        options={options}
+      >
+        <EmbeddedCheckout />
+      </EmbeddedCheckoutProvider>
+    </div>
+  )
 }
