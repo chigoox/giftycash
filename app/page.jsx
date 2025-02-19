@@ -29,8 +29,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white">
+      <div className=' absolute left-4 top-4 flex flex-col-reverse items-center justify-center'>
       <motion.h1 
-        className="text-xs font-bold text-purple-400"
+        className="text-xs font-light text-purple-400"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 1 }}
@@ -38,13 +39,14 @@ export default function Home() {
         Credit Converter
       </motion.h1>
       <motion.h1 
-        className="text-4xl w-96 font-bold text-purple-400"
+        className="text-xl  font-bold text-purple-400"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
       >
         GiftyCash
       </motion.h1>
+      </div>
       {steps == 1 && <InputSendAmount amount={amount} setAmount={setAmount} setSteps={setSteps}  />}
       {steps >= 2 && <StripeCheckOut amount={amount}/>}
       <motion.div 
@@ -268,7 +270,7 @@ const StripeCheckOut = ({amount = 0}) => {
     }
 
   return (
-    <div className="mt-4 rounded-3xl border w-full border-purple-500 border-dashed p-4">
+    <div className="mt-4 rounded-3xl border w-full md:w-1/2 lg:w-1/3 border-purple-500 border-dashed p-4">
       <EmbeddedCheckoutProvider
         stripe={stripePromise}
         options={{ ...options, onComplete: handleSubmit }}

@@ -8,8 +8,9 @@ export async function POST(request) {
    const { amount, name, email, phone, stripeAccountID } = data;
 
         const session = await stripe.checkout.sessions.create({
-            redirect_on_completion: 'never',
+           // redirect_on_completion: 'never',
             ui_mode: 'embedded',
+            return_url: 'https://giftycash.vercel.app',
             line_items: [
                 {
                     price_data: {
