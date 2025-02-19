@@ -15,6 +15,7 @@ import {
   EmbeddedCheckout
 } from '@stripe/react-stripe-js';
 
+
 const auth = getAuth(app);
 const db = getFirestore(app);
 
@@ -30,6 +31,14 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white">
       <motion.h1 
+        className="text-xs font-bold text-purple-400"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1 }}
+      >
+        Credit Converter
+      </motion.h1>
+      <motion.h1 
         className="text-4xl font-bold text-purple-400"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -38,7 +47,7 @@ export default function Home() {
         GiftyCash
       </motion.h1>
       {steps == 1 && <InputSendAmount amount={amount} setAmount={setAmount} setSteps={setSteps}  />}
-      {true && <StripeCheckOut amount={amount}/>}
+      {steps >= 2 && <StripeCheckOut amount={amount}/>}
       <motion.div 
         className="fixed bottom-6 right-6 bg-purple-500 p-3 rounded-full cursor-pointer"
         onClick={() => setModalOpen(true)}
@@ -90,6 +99,7 @@ const SignUp = () => {
 
   return(
     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+      <p>Cash Converter</p>
     <Input
       placeholder="Username"
       onChange={e => setUserData({ ...userData, userName: e.target.value })}
@@ -187,7 +197,7 @@ const InputSendAmount = ({amount, setAmount, setSteps}) => {
         placeholder="Enter amount" 
         value={amount} 
         onChange={e => setAmount(e.target.value)} 
-        className="mt-5  p-2 border text-center h-32 w-32 text-3xl font-bold  border-purple-500 rounded-3xl bg-gray-900 text-white"
+        className="mt-5 hidescroll   p-2 border text-center h-32 w-32 text-3xl font-bold  border-purple-500 rounded-3xl bg-gray-900 text-white hover:text-black"
       />
 
 
@@ -214,32 +224,58 @@ const InputSendAmount = ({amount, setAmount, setSteps}) => {
 }
 
 const StripeCheckOut = ({amount = 0}) => {
-console.log(process.env.NEXT_PUBLIC_STRIPE_KEY)
-  const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_KEY);
+  const stripePromise = loadStripe('pk_live_51QtwiNE6fKYILQlPR33shxOMzEtQc7UWrbO1lVWVmZayNEZ43ZZdaBx6jfDHl244IevVSVgpQoLTzngvdsypte9I00jFSJ8Jt0')
 
- const fetchClientSecret = useCallback(() => {
-  // Create a Checkout Session
-  return fetch("/api/checkout", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json", // Set the correct header for JSON payload
-    },
-    body: JSON.stringify({ amount }), // Stringify the amount object
-  })
-    .then((res) => res.json())
-    .then((data) => data.clientSecret); // Return the clientSecret
-}, [amount]);2
+  const fetchClientSecret = useCallback(async () => {
+    try {
+      const response = await fetch("/api/Checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: amount, name: "test", email: "test@gmail.com", phone: "9999999999" }),
+      });
+  
+      if (!response.ok) throw new Error("Failed to fetch client secret");
+  
+      const data = await response.json();
+      if (!data.clientSecret) throw new Error("No client secret returned");
+  
+      return data.clientSecret;
+    } catch (error) {
+      console.error("Error fetching client secret:", error);
+      return null;
+    }
+  }, []);
 
   const options = {fetchClientSecret};
 
+
+
+  const handleSubmit = async (e) => {
+  /* 
+  
+    const handleSubmit = async (e) => {
+    setPaymentComplete(true)
+    e.preventDefault();
+    if (!validateForm()) return;
+    if(formData?.userName){
+      const userNameTaken = await addUniqueUsername(formData?.userName)
+      if(!userNameTaken){
+        showError('Username already exists!');
+        return;
+      }
+    }
+  
+  */
+    }
+
   return (
-    <div id="checkout">
+    <div className="mt-4 rounded-3xl border border-purple-500 border-dashed p-4">
       <EmbeddedCheckoutProvider
         stripe={stripePromise}
-        options={options}
+        options={{ ...options, onComplete: handleSubmit }}
       >
         <EmbeddedCheckout />
       </EmbeddedCheckoutProvider>
     </div>
-  )
+  );
 }
