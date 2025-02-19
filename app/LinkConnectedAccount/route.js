@@ -1,4 +1,4 @@
-import { addToDoc } from '@/app/myCodes/Database';
+/* import { addToDoc } from '@/app/myCodes/Database';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
@@ -39,4 +39,4 @@ export async function POST(request) {
     );
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-}
+} */
