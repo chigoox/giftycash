@@ -1,19 +1,18 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'motion/react';
 import { Button, Input, Modal } from 'antd';
-import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
-import  app  from '../Firebase';
+import { GoogleAuthProvider, getAuth, signInWithPopup } from 'firebase/auth';
+import { doc, getDoc, getFirestore, setDoc } from 'firebase/firestore';
+import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
-import Stripe from 'stripe';
+import { useCallback, useState } from 'react';
+import app from '../Firebase';
 
-import {loadStripe} from '@stripe/stripe-js';
 import {
-  EmbeddedCheckoutProvider,
-  EmbeddedCheckout
+  EmbeddedCheckout,
+  EmbeddedCheckoutProvider
 } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 
 
 const auth = getAuth(app);
@@ -39,7 +38,7 @@ export default function Home() {
         Credit Converter
       </motion.h1>
       <motion.h1 
-        className="text-4xl font-bold text-purple-400"
+        className="text-4xl w-96 font-bold text-purple-400"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
@@ -269,7 +268,7 @@ const StripeCheckOut = ({amount = 0}) => {
     }
 
   return (
-    <div className="mt-4 rounded-3xl border border-purple-500 border-dashed p-4">
+    <div className="mt-4 rounded-3xl border w-full border-purple-500 border-dashed p-4">
       <EmbeddedCheckoutProvider
         stripe={stripePromise}
         options={{ ...options, onComplete: handleSubmit }}
