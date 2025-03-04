@@ -17,9 +17,22 @@ import { DollarSignIcon, LogInIcon, LogOutIcon, SendIcon, Settings, User2Icon } 
 import { logIn, logOut, sendVerification } from './myCodes/Auth';
 import { addToDoc } from './myCodes/Database';
 
+import { loadConnectAndInitialize } from "@stripe/connect-js/pure";
+
+import {
+  ConnectBalances,
+  ConnectComponentsProvider,
+  ConnectNotificationBanner,
+  ConnectPayments,
+  ConnectPayouts
+} from "@stripe/react-connect-js";
+
+
 
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+
 
 export default function Home() {
   const [amount, setAmount] = useState('');
@@ -30,7 +43,64 @@ export default function Home() {
   const [currentMenu, setCurrentMenu] = useState('None')
   const [LoginRegister, setLoginRegister] = useState(false)
   const toggleLoginRegister = () => {setLoginRegister(!LoginRegister) }
+  const [stripeConnectInstance, setStripeConnectInstance] = useState(null);
+
+ //load Stripe emeded platform
+  useEffect(() => {
+    if(!user?.stripeAccountID) {
+      console.error("No Stripe Account ID found for this user.");
+      return;
+    }
+
+
+    const fetchClientSecret = async () => {
+      try {
+        const response = await fetch("/api/AccountSession", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            stripeAccountID: user?.stripeAccountID || null,
+          }),
+        });
+
+        if (!response.ok) {
+          const { error } = await response.json();
+          console.error("An error occurred:", error);
+          return null;
+        }
+
+        const { client_secret: clientSecret } = await response.json();
+        return clientSecret;
+      } catch (error) {
+        console.error("Error fetching client secret:", error);
+        return null;
+      }
+    };
+
+    const initializeStripeConnect = async () => {
+      const clientSecret = await fetchClientSecret();
+
+      if (clientSecret) {
+        const instance = loadConnectAndInitialize({
+          publishableKey:  "pk_live_51QtwiNE6fKYILQlPR33shxOMzEtQc7UWrbO1lVWVmZayNEZ43ZZdaBx6jfDHl244IevVSVgpQoLTzngvdsypte9I00jFSJ8Jt0",
+          fetchClientSecret: () => clientSecret,
+          appearance: {
+            overlays: "dialog",
+            variables: {
+              colorPrimary: 'red',
+            },
+          },
+        });
+
+        setStripeConnectInstance(instance);
+      }
+    };
+
+    initializeStripeConnect();
+    
+  }, [user?.stripeAccountID]);
   
+  //Check if user is signed in then Fetch UserData
   useEffect(() => {
     onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -49,7 +119,26 @@ export default function Home() {
 
   return (
     <div className="min-h-screen overflow-hidden bg-black flex flex-col items-center justify-center text-white">
-      {user.uid && <MobileNavBar currentMenu={currentMenu} setCurrentMenu={setCurrentMenu} />}
+      {user.uid && (
+        <MobileNavBar
+          currentMenu={currentMenu}
+          setCurrentMenu={setCurrentMenu}
+        />
+      )}
+      {user?.stripeAccountID && 
+        <div>
+          <Balance
+            stripeConnectInstance={stripeConnectInstance}
+            setCurrentMenu={setCurrentMenu}
+            currentMenu={currentMenu}
+            user={user}
+          />
+          <Send    currentMenu={currentMenu} />
+          <Profile currentMenu={currentMenu} />
+          <Setting currentMenu={currentMenu} />
+        </div>
+      }
+
       <div className=" absolute left-4 top-4 flex flex-col-reverse items-center justify-center">
         <motion.h1
           className="text-xs font-light text-purple-400"
@@ -78,7 +167,11 @@ export default function Home() {
       )}
       {steps >= 2 && <StripeCheckOut amount={amount} />}
       <motion.div
-        className={`fixed ${user.uid? 'right-4 h-16  bottom-4 w-5 md:w-auto rounded-r-lg p-1':'p-3  right-6 bottom-6 rounded-full'} trans flex items-center justify-center  bg-purple-500  cursor-pointer`}
+        className={`fixed ${
+          user.uid
+            ? "right-4 h-16  bottom-4 w-5 md:w-auto rounded-r-lg p-1"
+            : "p-3  right-6 bottom-6 rounded-full"
+        } trans flex items-center justify-center  bg-purple-500  cursor-pointer`}
         onClick={() => setModalOpen(true)}
         whileHover={{ scale: 1.1 }}
       >
@@ -526,4 +619,96 @@ const StripeCheckOut = ({amount = 0}) => {
       </EmbeddedCheckoutProvider>
     </div>
   );
+}
+
+const Balance = ({currentMenu, setCurrentMenu,stripeConnectInstance}) =>{
+  
+
+  return(
+    <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
+      <Modal width={{
+          xs: '98%',
+          sm: '90%',
+          md: '80%',
+          lg: '60%',
+          xl: '50%',
+          xxl: '40%',
+        }} className='w-full h-full' onOk={()=>setCurrentMenu('none')} onCancel={()=>setCurrentMenu('none')} open={currentMenu == 'Balance'} title='Balance' >
+        { <ConnectBalances />}
+        
+        <Card className={'p-0 h-auto w-auto min-w-0 min-h-0'}>
+
+        </Card>
+      </Modal>
+    </ConnectComponentsProvider>
+  )
+}
+
+const Send = ({currentMenu, setCurrentMenu,stripeConnectInstance}) =>{
+  
+
+  return(
+    <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
+      <Modal width={{
+          xs: '98%',
+          sm: '90%',
+          md: '80%',
+          lg: '60%',
+          xl: '50%',
+          xxl: '40%',
+        }} className='w-full h-full' onOk={()=>setCurrentMenu('none')} onCancel={()=>setCurrentMenu('none')} open={currentMenu == 'Send'} title='Send' >
+        { <ConnectBalances />}
+        
+        <Card className={'p-0 h-auto w-auto min-w-0 min-h-0'}>
+
+        </Card>
+      </Modal>
+    </ConnectComponentsProvider>
+  )
+}
+
+const Profile = ({currentMenu, setCurrentMenu,stripeConnectInstance}) =>{
+  
+
+  return(
+    <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
+      <Modal width={{
+          xs: '98%',
+          sm: '90%',
+          md: '80%',
+          lg: '60%',
+          xl: '50%',
+          xxl: '40%',
+        }} className='w-full h-full' onOk={()=>setCurrentMenu('none')} onCancel={()=>setCurrentMenu('none')} open={currentMenu == 'Profile'} title='Profile' >
+
+        
+        <Card className={'p-0 h-auto w-auto min-w-0 min-h-0'}>
+
+        </Card>
+      </Modal>
+    </ConnectComponentsProvider>
+  )
+}
+
+const Setting = ({currentMenu, setCurrentMenu,stripeConnectInstance}) =>{
+  
+
+  return(
+    <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
+      <Modal width={{
+          xs: '98%',
+          sm: '90%',
+          md: '80%',
+          lg: '60%',
+          xl: '50%',
+          xxl: '40%',
+        }} className='w-full h-full' onOk={()=>setCurrentMenu('none')} onCancel={()=>setCurrentMenu('none')} open={currentMenu == 'Settings'} title='Settings' >
+       
+        
+        <Card className={'p-0 h-auto w-auto min-w-0 min-h-0'}>
+
+        </Card>
+      </Modal>
+    </ConnectComponentsProvider>
+  )
 }
