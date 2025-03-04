@@ -1,4 +1,5 @@
-/* import { addToDoc } from '@/app/myCodes/Database';
+import { addToDoc } from '@/app/myCodes/Database';
+import { isDev } from '@/app/myCodes/Util';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
@@ -8,29 +9,24 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 
 export async function POST(request) {
   try {
-    const { userName, email, uid, stripeAccountID } = await request.json();
+    const { email, uid, } = await request.json();
 
-    const account = stripeAccountID ? {id: stripeAccountID} : await stripe.accounts.create({
+    const account =  await stripe.accounts.create({
       country: 'US',
-      type: 'express',
-      idempotencyKey: stripeAccountID,
     })
 
     
     const accountLink = await stripe.accountLinks.create({
       account: account.id,
-      return_url: `${request.headers.get('origin')}/${userName}/Admin`,
-      refresh_url: `${request.headers.get('origin')}/${userName}/Admin`,
+      return_url: isDev()? 'https://test.com'  : `${request.headers.get('origin')}/`.replace('http', 'https'),
+      refresh_url: isDev()? 'https://test.com'  : `${request.headers.get('origin')}/`.replace('http', 'https'),
       type: 'account_onboarding',
     });
-    
-    //const loginLink = await stripe.accounts.createLoginLink(account.id);
-    await addToDoc('Owners', uid, {
+    await addToDoc('users', email, {
       stripeAccountID: account.id,
-      //stripeDashboard:loginLink.url
     });
 
-
+console.log(accountLink)
     return NextResponse.json(accountLink.url);
   } catch (error) {
     console.error(
@@ -39,4 +35,4 @@ export async function POST(request) {
     );
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-} */
+}
