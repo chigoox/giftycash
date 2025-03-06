@@ -20,12 +20,14 @@ import { addToDoc } from './myCodes/Database';
 import { loadConnectAndInitialize } from "@stripe/connect-js/pure";
 
 import {
+  ConnectAccountManagement,
   ConnectBalances,
   ConnectComponentsProvider,
   ConnectNotificationBanner,
   ConnectPayments,
   ConnectPayouts
 } from "@stripe/react-connect-js";
+import { sendStatusCode } from 'next/dist/server/api-utils';
 
 
 
@@ -133,9 +135,9 @@ export default function Home() {
             currentMenu={currentMenu}
             user={user}
           />
-          <Send    currentMenu={currentMenu} />
-          <Profile currentMenu={currentMenu} />
-          <Setting currentMenu={currentMenu} />
+          <Send     setCurrentMenu={setCurrentMenu} stripeConnectInstance={stripeConnectInstance}  currentMenu={currentMenu} />
+          <Profile  setCurrentMenu={setCurrentMenu} stripeConnectInstance={stripeConnectInstance}  currentMenu={currentMenu} />
+          <Setting  setCurrentMenu={setCurrentMenu} stripeConnectInstance={stripeConnectInstance}  currentMenu={currentMenu} />
         </div>
       }
 
@@ -645,8 +647,10 @@ const Balance = ({currentMenu, setCurrentMenu,stripeConnectInstance}) =>{
 }
 
 const Send = ({currentMenu, setCurrentMenu,stripeConnectInstance}) =>{
-  
 
+  const [amount, setAmount] = useState(0)
+  const [sendTo, setSendTo] = useState('')
+  console.log(amount, sendTo)
   return(
     <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
       <Modal width={{
@@ -656,12 +660,21 @@ const Send = ({currentMenu, setCurrentMenu,stripeConnectInstance}) =>{
           lg: '60%',
           xl: '50%',
           xxl: '40%',
-        }} className='w-full h-full' onOk={()=>setCurrentMenu('none')} onCancel={()=>setCurrentMenu('none')} open={currentMenu == 'Send'} title='Send' >
-        { <ConnectBalances />}
-        
-        <Card className={'p-0 h-auto w-auto min-w-0 min-h-0'}>
+        }} className='w-full h-full' onOk={()=>setCurrentMenu('none')} cancelButtonProps={<div>test</div>} onCancel={()=>setCurrentMenu('none')} open={currentMenu == 'Send'} title='Send' >
+       <div className='flex gap-2 items-center justify-center'>
+        <h1>Balance: </h1>
+        ${0.00}
+       </div>
+       <Input value={sendTo} onChange={({target})=>setSendTo(target.value)} placeholder='To' type='text' className='my-2 text-center'/>
+       <Input onBeforeInput={()=>{<div>test</div>}} value={amount.replace('$','')} onChange={({target})=>setAmount(target.value)} placeholder='Amount' type='number' className='my-2 text-center'/>
+       <div className='flex items-center justify-center gap-4'>{['$25','$50','$100'].map((item)=>{
 
-        </Card>
+        return(<Button onClick={()=>{setAmount(item)}}>{item}</Button>)
+       })}</div>   
+          <h1 className='my-2 text-xl font-bold'>Recent</h1>
+          <Card  className={'p-0 h-auto w-auto min-w-0 min-h-0'}>
+            
+          </Card>
       </Modal>
     </ConnectComponentsProvider>
   )
@@ -683,7 +696,7 @@ const Profile = ({currentMenu, setCurrentMenu,stripeConnectInstance}) =>{
 
         
         <Card className={'p-0 h-auto w-auto min-w-0 min-h-0'}>
-
+        <ConnectAccountManagement />
         </Card>
       </Modal>
     </ConnectComponentsProvider>
