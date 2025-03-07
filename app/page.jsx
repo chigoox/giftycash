@@ -648,7 +648,7 @@ const Balance = ({currentMenu, setCurrentMenu,stripeConnectInstance}) =>{
 
 const Send = ({currentMenu, setCurrentMenu,stripeConnectInstance}) =>{
 
-  const [amount, setAmount] = useState(0)
+  const [amount, setAmount] = useState('')
   const [sendTo, setSendTo] = useState('')
   console.log(amount, sendTo)
   return(
@@ -660,7 +660,7 @@ const Send = ({currentMenu, setCurrentMenu,stripeConnectInstance}) =>{
           lg: '60%',
           xl: '50%',
           xxl: '40%',
-        }} className='w-full h-full' onOk={()=>setCurrentMenu('none')} cancelButtonProps={<div>test</div>} onCancel={()=>setCurrentMenu('none')} open={currentMenu == 'Send'} title='Send' >
+        }} className='w-full h-full'  onOk={()=>setCurrentMenu('none')} cancelButtonProps={<div>test</div>} onCancel={()=>setCurrentMenu('none')} open={currentMenu == 'Send'} title='Send' >
        <div className='flex gap-2 items-center justify-center'>
         <h1>Balance: </h1>
         ${0.00}
