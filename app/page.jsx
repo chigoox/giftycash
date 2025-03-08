@@ -533,7 +533,7 @@ const InputSendAmount = ({amount, setAmount, setSteps, user}) => {
 
   const defualtAmounts = ['$10', '$25', '$50', '$100', '$250', '$500'];
   return(
-    <div className='flex flex-col items-center'>
+    <div className='flex text-white flex-col items-center'>
       <Input 
         type="number" 
         placeholder="0"
