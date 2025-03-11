@@ -533,10 +533,10 @@ const InputSendAmount = ({amount, setAmount, setSteps, user}) => {
 
   const defualtAmounts = ['$10', '$25', '$50', '$100', '$250', '$500'];
   return(
-    <div className='flex flex-col items-center'>
+    <div className='flex text-white flex-col items-center'>
       <Input 
         type="number" 
-        placeholder="Enter amount" 
+        placeholder="0"
         value={amount} 
         onChange={e => setAmount(e.target.value)} 
         className="mt-5 hidescroll   p-2 border text-center h-32 w-32 text-3xl font-bold  border-purple-500 rounded-3xl bg-gray-900 text-white hover:text-black"
