@@ -650,6 +650,11 @@ const Send = ({currentMenu, setCurrentMenu,stripeConnectInstance}) =>{
 
   const [amount, setAmount] = useState('')
   const [sendTo, setSendTo] = useState('')
+  const [recentSends, setRecentSends] = useState([
+    {amount: 25, to: 'Tony', date: '1/8/25'},
+    {amount: 4, to: 'jane', date: '11/29/24'},
+    {amount: 700, to: 'ed5', date: '3/4/25'},
+  ])
   console.log(amount, sendTo)
   return(
     <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
@@ -673,7 +678,15 @@ const Send = ({currentMenu, setCurrentMenu,stripeConnectInstance}) =>{
        })}</div>   
           <h1 className='my-2 text-xl font-bold'>Recent</h1>
           <Card  className={'p-0 h-auto w-auto min-w-0 min-h-0'}>
-            
+            {recentSends.map((item, i)=>{
+              return(
+                <Button onClick={()=>{setSendTo(item.to)}}  key={i} className='flex w-full my-2 items-center justify-between gap-2'>
+                  <h1>{item.to}</h1>
+                  <h1>{item.amount}</h1>
+                  <h1>item.date</h1>
+                </Button>
+              )
+            })}
           </Card>
       </Modal>
     </ConnectComponentsProvider>
